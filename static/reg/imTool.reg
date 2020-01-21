@@ -1,0 +1,10 @@
+Windows Registry Editor Version 5.00
+[HKEY_CLASSES_ROOT\imTool]
+"URL Protocol"="C:\\Program Files\\wjw-im\\wjw-im.exe"
+@="imToolProtocol"
+[HKEY_CLASSES_ROOT\imTool\DefaultIcon]
+@="C:\\Program Files\\wjw-im\\wjw-im.exe,1"
+[HKEY_CLASSES_ROOT\imTool\shell]
+[HKEY_CLASSES_ROOT\imTool\shell\open]
+[HKEY_CLASSES_ROOT\imTool\shell\open\command]
+@="\"C:\\Program Files\\wjw-im\\wjw-im.exe\"  \"%1\""
