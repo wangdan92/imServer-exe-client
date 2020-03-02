@@ -9,19 +9,20 @@ export default {
   getHostUrl: function() {
     //开发环境
     if (process.env.NODE_ENV === 'development') {
-      this.httpUrl = 'http://10.168.2.215:9296/imServer/'
+     // this.httpUrl = 'http://10.168.2.215:9296/wjw-imServer/'
+      this.httpUrl = 'http://60.12.221.6:39015/wjw-imServer/'
     }
     //生产环境
     else {
-      //this.httpUrl = 'http://60.12.221.6:39015/wjw-imServer/'
-      this.httpUrl = 'http://10.168.2.215:9296/imServer/'
+      this.httpUrl = 'http://60.12.221.6:39015/wjw-imServer/'
+     // this.httpUrl = 'http://10.168.2.215:9296/wjw-imServer/'
     }
     return this.httpUrl
   },
   //文件服务器访问路径
   getMultipartUrl: function() {
     if (process.env.NODE_ENV === 'development') {
-      this.multipartUrl = 'http://60.12.221.6:39003/multipartPlatform/'
+      this.multipartUrl = 'http://60.12.221.6:39013/multipartPlatform/'
     }else {
       this.multipartUrl = 'http://60.12.221.6:39013/multipartPlatform/'
     }
@@ -34,10 +35,11 @@ export default {
   //获取websocket请求前缀
   getWsUrl: function() {
     if (process.env.NODE_ENV === 'development') {
-      this.websocketUrl = 'ws://10.168.2.215:9296/imServer/ws'
+     // this.websocketUrl = 'ws://10.168.2.215:9296/wjw-imServer/ws'
+       this.websocketUrl = 'ws://60.12.221.6:39015/wjw-imServer/ws'
     }else {
       //this.websocketUrl = 'ws://60.12.221.6:39015/wjw-imServer/ws'
-        this.websocketUrl = 'ws://10.168.2.215:9296/imServer/ws'
+        this.websocketUrl = 'ws://10.168.2.215:9296/wjw-imServer/ws'
     }
     return this.websocketUrl
   },

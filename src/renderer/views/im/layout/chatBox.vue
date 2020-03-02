@@ -14,7 +14,7 @@
                             <b style="width:66%; overflow: hidden;text-overflow:ellipsis;white-space: nowrap;">{{ chat.chatGroupName }}</b>
                             <p style="width:66%; overflow: hidden;text-overflow:ellipsis;white-space: nowrap;">{{ chat.sendName+":"+chat.content }}</p>
                         </a>
-                        <Icon type="md-close" @click="delChat(chat)"></Icon>
+                       <!-- <Icon type="md-close" @click="delChat(chat)"></Icon>-->
                     </li>
                 </ul>
             </div>
