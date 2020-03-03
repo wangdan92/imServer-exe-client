@@ -1,20 +1,23 @@
 <template>
     <div class="im-chat" v-if="chat.chatGroupId">
-<!--顶部导航菜单栏-->
+        <!--顶部导航菜单栏-->
         <div class="im-chat-top" v-if="chat">
             <span>{{ chat.chatGroupName }}</span>
-            <a  v-if="chat.groupType!=0" href="javascript:;" @click="getGroupDetail()" class="pull-right menu">
+            <a  v-if="chat.groupType!=0" title="添加群成员"  href="javascript:;" @click="showAddUserModal()" class="pull-right menu">
+                <Icon type="ios-add-circle-outline" />
+            </a>
+            <a  v-if="chat.groupType!=0" title="群公告" href="javascript:;" @click="getGroupDetail()" class="pull-right menu">
                 <Icon type="md-flag"></Icon>
             </a>
-            <a  v-if="chat.groupType!=0" href="javascript:;" @click="updateNameModal=true" class="pull-right menu">
+            <a  v-if="chat.groupType!=0" title="群名称" href="javascript:;" @click="updateNameModal=true" class="pull-right menu">
                 <Icon type="md-menu"/>
             </a>
         </div>
-<!--主界面-->
+        <!--主界面-->
         <div class="im-chat-main">
             <!--通讯面板-->
             <div class="im-chat-main-left" >
-               <!--信息记录面板-->
+                <!--信息记录面板-->
                 <div class="im-chat-main-box messages"   id="message-box" ref="scrollDiv">
                     <ul>
                         <li v-for="item in messageList" :class="{'im-chat-mine': item.msg.userinfo.id==currentUser.id}">
@@ -68,7 +71,7 @@
                         </Upload>
                         <!--表情面板实体组件-->
                         <Faces v-show="showFace" @click="showFace = true" class="faces-box"  @insertFace="insertFace"></Faces>
-                       <!--查看聊天记录入口-->
+                        <!--查看聊天记录入口-->
                         <Button class="history-message-btn" @click="getHistoryMessage()">聊天记录</Button>
                     </div>
                     <!--文本输入框-->
@@ -80,17 +83,26 @@
             </div>
             <!-- 群成员面板-->
             <div v-if="chat.groupType ==1||chat.groupType ==2" class="im-chat-users">
-                <ul class="chat-user-list">
-                    <li v-for="item in userList" @dblclick="showChat(item)" @click="showUser(item)">
-                        <span class="im-chat-avatar">
-                            <img :src="item.photoPath?item.photoPath:defaultPhoto" alt="头像"/>
-                        </span>
-                        {{item.realName}}
+                <ul class="chat-user-list" style="padding: 5px 0px;margin-right: 1px">
+                    <li v-for="item in userList"   style="margin:5px 0px; ">
+                        <Dropdown trigger="hover">
+                            <div style="width: max-content; display: flex;flex-direction: row;justify-content:center;align-items: center">
+                                <p style="width: 40px"><img style="width: 30px" height="30px" :src="item.photoPath?item.photoPath:defaultPhoto" alt="头像"/></p>
+                                <p @click="showUser(item)" style="width: 80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <span>{{item.realName}}</span>
+                                </p>
+                                <p @click="delUser(item)" v-if="item.createId==currentUser.id&&currentUser.id!=item.userId"><Icon type="md-close" color="red" size="18"/></p>
+                                <p v-else><Icon type="md-key" color="blue" size="18"/></p>
+                            </div>
+                            <DropdownMenu slot="list">
+                                <DropdownItem style="text-align: center">{{item.realName}}</DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
                     </li>
                 </ul>
             </div>
         </div>
-<!--群组公告弹窗栏-->
+        <!--群组公告弹窗栏-->
         <Modal v-model="modal" width="300" class="user-model">
             <p slot="header" style="text-align: center">
                 <span>{{"群["+chatDetail.name+"]公告"}}</span>
@@ -101,7 +113,7 @@
                 <i-button type="success" size="large" long :loading="updateLoading" @click="updateGroupNotice()">确认修改</i-button>
             </div>
         </Modal>
-<!--修改群名称的弹窗-->
+        <!--修改群名称的弹窗-->
         <Modal v-model="updateNameModal" width="300" class="user-model">
             <p slot="header" style="text-align: center">
                 <span>修改群名称</span>
@@ -111,7 +123,7 @@
                 <i-button type="success" size="large" long :loading="updateNameLoading" @click="updateGroupName">确认修改</i-button>
             </div>
         </Modal>
- <!--聊天记录抽屉栏-->
+        <!--聊天记录抽屉栏-->
         <Drawer title="聊天记录" :closable="true" v-model="showHistory" class="history-message" width="60%">
             <div class="im-chat-main">
                 <div class="messages" id="his-chat-message">
@@ -132,6 +144,48 @@
             <Page :total="count" size="small" show-total class="page" :page-size="pageSize"
                   @on-change="getHistoryMessage"/>
         </Drawer>
+
+        <!--添加群成员的弹窗-->
+        <Modal v-model="addUserModal"  width="650"
+               class="user-model"
+               draggable
+               :mask-closable="maskClosable"
+               :styles="ModalStyle">
+            <p slot="header" style="text-align: center">
+                <span>发起群聊</span>
+            </p>
+            <div slot="footer">
+                <Button type="primary" size="small"  :disabled="disabled"  @click="addUser">添加</Button>
+                <Button type="warning" size="small"  @click="cancelLaunch">取消</Button>
+            </div>
+            <Transfer  :data="contactsList"
+                       :target-keys="targetKeys"
+                       :list-style="listStyle"
+                       :titles="titles"
+                       :not-found-text="notFoundText"
+                       filterable
+                       :filter-method="searchMethod"
+                       :render-format="myRender"
+                       @on-change="handleChange">
+                <div :style="{float: 'right', margin: '5px'}">
+                    <i-button  size="small" @click="reloadMockData">重置</i-button>
+                </div>
+            </Transfer>
+        </Modal>
+
+        <!-- 删除群成员提示框-->
+        <Modal v-model="delUserModal" width="360">
+            <p slot="header" style="color:#f60;text-align:center">
+                <Icon type="ios-information-circle"></Icon>
+                <span>删除确认</span>
+            </p>
+            <div style="text-align:center">
+                <p>您确认要将用户<i style="color: #eb2f96">[{{currDelMember.realName}}]</i>剔除群组吗?</p>
+            </div>
+            <div slot="footer">
+                <Button type="error" size="large" long :loading="delMember_loading" @click="delMember()">删除</Button>
+            </div>
+        </Modal>
     </div>
 </template>
 
@@ -150,6 +204,7 @@
     name: 'userChat',
     data() {
       return {
+        requestApi : RequestUtils.getInstance(),
         defaultPhoto: '/static/img/defaultPhoto.png',
         updateLoading:false,
         updateNameLoading:false,
@@ -160,10 +215,15 @@
         //分页参数
         pageNum:1,
         pageSize: 20,
+        historyIsLoading:false,
         showHistory: false,//历史信息显示开关
         hisMessageList: [],//聊天记录
         modal: false, //打开群公告弹窗开关
         updateNameModal:false,//打开修改群名称弹窗开关
+        addUserModal:false,  //添加群成员
+        delUserModal:false, //删除群成员对话框
+        delMember_loading:false, //删除群成员加载
+        currDelMember:{}, //当前删除的群成员
         chatName:'',
         nameMaxLength:16,
         chatDetail:{}, //群信息详情
@@ -198,6 +258,22 @@
         //上传文件最大限制 300M
         fileMaxSize:314572800,
         cookieAuth:true,
+
+        //穿梭框相关
+        //弹窗相关
+        maskClosable:false,  //是否允许点击遮罩层关闭
+        disabled:true,     //是否允许拖动
+        ModalStyle:{
+          top:'30px'
+        },
+        contactsList: [],
+        targetKeys:  [],
+        titles:["通讯录列表","已勾选的人员"],
+        notFoundText:'请勾选需要添加的联系人',
+        listStyle: {
+          width: '250px',
+          height: '420px'
+        },
       };
     },
     props: ['chat'],
@@ -249,19 +325,48 @@
         duration: 3
       });
     },
-
     updated: function () {
       let that=this;
       //监听元素滚动到顶部
       that.$refs.scrollDiv.addEventListener("scroll", that.scrollTopper);
     },
-
     methods: {
       showChat(user) {
         console.log("创建新的聊天群组",user);
       },
-      showUser: function() {
-        console.log("成员信息");
+      showUser: function(member) {
+        console.log("成员信息",member);
+      },
+      /*确认删除群成员*/
+      delMember:function(){
+        let that=this;
+        that.delMember_loading = true;
+        let member=that.currDelMember;
+        let params={"userList":[{"userId":member.userId}]};
+        //群id
+        params.id=that.chat.chatGroupId;
+        //创建群的用户id
+        params.createId=that.chat.createId;
+        that.requestApi.request(conf.deleteGroupMember(), params).then(res => {
+          if (res.code==1){
+            that.delMember_loading = false;
+            that.delUserModal = false;
+            that.$Message.success('删除成功');
+            that.getGroupMembers(that.chat);
+          };
+        }).catch(function(error) {
+          console.log("删除群成员触发异常",error);
+        });
+        setTimeout(() => {
+          that.delMember_loading = false;
+          that.delUserModal = false;
+        }, 10000);
+      },
+      /*删除成员的弹窗*/
+      delUser:function(member){
+        let that=this;
+        that.delUserModal=true;
+        that.currDelMember=member;
       },
       //表情面板显示控制开关
       showFaceBox: function() {
@@ -327,15 +432,17 @@
           let suffix = fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length);
           // 文件
           if (self.imgFormat.indexOf(suffix) === -1) {
-            msgObj={'text': 'file(' + path + ')[' + fileName + ']','fileUrl':path,'fileName':fileName};
+            //固定格式,后面会转义
+            msgObj={'text': 'file(' + path + ')[' + fileName + ']','fileUrl':path,'fileName':fileName,"contentType":5};
           }
           // 图片
           else {
+            //固定格式
             let imgText= 'img[' + path + ']';
-            msgObj={'text':imgText,'url':path,'fileName':fileName};
+            msgObj={'text':imgText,'url':path,'fileName':fileName,"contentType":2};
           }
           if (msgObj.text!=null&&msgObj.text.length>0){
-            self.send(1,1,msgObj);
+            self.send(1,msgObj.contentType,msgObj);
           } ;
         } else {
           selfAlert("系统繁忙,请稍后重试",this.loadingHeight,2,'error',self);
@@ -398,24 +505,24 @@
             //判断是否含有敏感词
             RequestUtils.getInstance() .request(conf.validateMsgUrl(), msg).then(response => {
               if (response.code==1&& response.data!=null){
-                    let keyWords= response.data;
-                    let msg="";
-                    for (let i = 0; i <keyWords.length ; i++) {
-                       if (i==keyWords.length-1){
-                         msg=msg+"["+keyWords[i]+"]";
-                       }
-                       else{
-                         msg=msg+"["+keyWords[i]+"],";
-                       }
-                    }
-                    console.log("抱歉,您发送的信息内容含特殊敏感词",msg);
-                    self.$Notice.error({
-                      title: '发送失败,信息内容含以下特殊敏感词:',
-                      desc:msg,
-                      duration: 10
-                    });
-                    //self.messageContent="";
-                    return;
+                let keyWords= response.data;
+                let msg="";
+                for (let i = 0; i <keyWords.length ; i++) {
+                  if (i==keyWords.length-1){
+                    msg=msg+"["+keyWords[i]+"]";
+                  }
+                  else{
+                    msg=msg+"["+keyWords[i]+"],";
+                  }
+                }
+                console.log("抱歉,您发送的信息内容含特殊敏感词",msg);
+                self.$Notice.error({
+                  title: '发送失败,信息内容含以下特殊敏感词:',
+                  desc:msg,
+                  duration: 10
+                });
+                //self.messageContent="";
+                return;
               }else{
                 self.send(1,1,msg);
               }
@@ -494,6 +601,8 @@
             console.log("本次查询群组[ID:"+param.chatGroupId+"]历史信息记录有["+list.length+"]条,起始页["+param.pageNum+"]");
             if (list!=null&&list.length>0){
               that.$store.commit("addHistoryMessageList",list);
+              that.pageNum=that.pageNum+1;
+              that.historyIsLoading=false;
             } ;
             that.$nextTick().then(function () {
               // DOM 更新了
@@ -533,8 +642,8 @@
       updateGroupNotice(){
         let that=this;
         if (that.chatAdv.length<1){
-           selfAlert("公告内容不能为空",that.loadingHeight,2,"error",that);
-           return;
+          selfAlert("公告内容不能为空",that.loadingHeight,2,"error",that);
+          return;
         } ;
         that.updateLoading=true;
         let param={"id":that.chatDetail.id,"notice":that.chatAdv};
@@ -587,31 +696,157 @@
       //监听信息面板滚动到顶部,然后加载历史记录
       scrollTopper(e){
         let that=this;
-       // console.log("距离顶部的距离",e.target.scrollTop);
+        if (that.historyIsLoading==true){
+          return ;
+        } ;
+        // console.log("距离顶部的距离",e.target.scrollTop);
         let scrollHeight= e.target.scrollHeight;
         //console.log("滚动条的高度",scrollHeight);
         let showWindowHeight= e.target.clientHeight;
         //console.log("可见窗口高度",showWindowHeight);
         //滚到到距离顶部10个单位的时候加载更多的历史信息
         if (e.target.scrollTop<5){
-          console.log("触碰到顶部");
-          that.pageNum=that.pageNum+1;
-          that.getChatGroupHistoryMsg();
+          if (that.pageNum!=1){
+            that.getChatGroupHistoryMsg();
+          }
+          else{
+            console.log("此处页面初始值不能为1.但是页面一加载会触发此方法");
+            return;
+          }
+        }
+      },
+      /**添加群成员相关的方法*/
+      /*打开弹窗并获取人员列表*/
+      showAddUserModal(){
+        //从后台查询所有人员列表
+        let that=this;
+        let params={"currentUserId":that.currentUser.id};
+        that.requestApi.request(conf.getContactsListUrl(), params).then(res => {
+          if (res.code==1&&res.data!=null){
+            for (let i = 0; i <res.data.length ; i++) {
+              let u1=res.data[i];
+              for (let j = 0; j <that.userList.length ; j++) {
+                let u2=that.userList[j];
+                if (u1.key==u2.userId.toString()){
+                  u1.disabled=true;
+                }
+              }
+            }
+            that.contactsList=res.data;
+            that.addUserModal=true;
+            //console.log("通讯录列表", that.contactsList);
+          } ;
+        }).catch(function(error) {
+          console.log("群组列表接口触发异常",error);
+        });
+      },
+      /*监听穿梭框的值变化*/
+      handleChange (newTargetKeys) {
+        this.targetKeys = newTargetKeys;
+        if (this.targetKeys.length>0){
+          this.disabled=false;
         } ;
       },
+      /*渲染穿梭框*/
+      myRender (item) {
+        let that=this;
+        let photo=item.photoPath;
+        if (photo==null||photo==undefined||photo.length<1){
+          photo=that.defaultPhoto;
+        }else{
+          photo=conf.getFileUrl()+photo;
+        }
+        let div="<div style='float:right;display:flex;flex-direction:row;'>" +
+          "<img style='width:30px;height:30px;' alt='头像' src='"+photo+"'/>" +
+          "<p   style='width:120px;margin-left:20px'>"+item.realName +'-'+ item.departmentName+"</p>" +
+          "</div>";
+        return div;
+      },
+      /*穿梭框内的搜索人员*/
+      searchMethod(data,query){
+        let userObj=data.realName+"-"+data.departmentName;
+        return userObj.indexOf(query)>-1;
+      },
+      /*重置穿梭框*/
+      reloadMockData () {
+        let that=this;
+        that.showAddUserModal();
+        that.targetKeys=[];
+        that.disabled=true;
+      },
+      /*确定添加按钮触发*/
+      addUser(){
+        let that=this;
+        let userIdArr=that.targetKeys;
+        if (userIdArr.length<1){
+          selfAlert('请至少选择1位人员',null,2,'warning',that);
+          return;
+        }else{
+          console.log("确定添加成员");
+          that.onOk();
+        }
+      },
+      //确定发起群聊
+      onOk:function() {
+        let that=this;
+        selfAlert('正在加载...',null,0,'loading',that);
+        let userIdArr=that.targetKeys;
+        let addUserList=[];
+        for (let i=0;i<userIdArr.length;i++){
+          let userId=userIdArr[i];
+          addUserList.push({"userId":parseInt(userId)});
+        } ;
+        let params={"userList":addUserList};
+        //群id
+        params.id=that.chat.chatGroupId;
+        //创建群的用户id
+        params.createId=that.chat.createId;
+        console.log("添加群成员信息",params);
+        that.requestApi.request(conf.addGroupMember(), params).then(res => {
+          console.log("添加群成员响应信息",res);
+          if (res.code==1){
+            console.log("群成员添加成功");
+            that.getGroupMembers(that.chat);
+            setTimeout(function() {
+              that.over();
+            },1000)
+          } ;
+        }).catch(function(error) {
+          console.log("添加群成员触发异常",error);
+          that.$Message.destroy();
+        });
+        setTimeout(function() {
+          that.$Message.destroy();
+        },10000)
+      },
+      /*取消发起群聊*/
+      cancelLaunch(){
+        let that=this;
+        that.addUserModal=false;
+        that.over();
+      },
+      //退出
+      over(){
+        let that=this;
+        that.addUserModal=false;
+        that.targetKeys=[];
+        that.disabled=true;
+        that.contactsList=[];
+        that.$Message.destroy();
+      }
     },
-   //销毁之前
+    //销毁之前
     beforeDestory:function() {
       let that=this;
       //清楚缓存
       that.$store.commit("clear");
-   }
+    }
   };
 </script>
 
 <style lang="scss">
     @import '../../../../../static/styles/theme';
-      .demo-spin-icon-load{
+    .demo-spin-icon-load{
         animation: ani-demo-spin 1s linear infinite;
     }
     .im-chat {

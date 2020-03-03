@@ -126,5 +126,14 @@ export default {
   //校验信息内容是否包含敏感词
   validateMsgUrl:function() {
     return this.getHostUrl()+"/imChatGroupMessage/validateMsg";
+  },
+
+  //添加群成员
+  addGroupMember:function() {
+    return this.getHostUrl()+"/imCharGroupUser/addImChatGroupUsers";
+  },
+  //删除成员
+  deleteGroupMember:function() {
+    return this.getHostUrl()+"/imCharGroupUser/deleteImChatGroupUsers";
   }
 };
